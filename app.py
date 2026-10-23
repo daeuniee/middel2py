@@ -38,7 +38,7 @@ with left:
     st.subheader("📚 학습자료")
     st.link_button(
         "학습자료 열기",
-        "https://held-bangle-320.notion.site/2-4-402db0c3a76f81dfb4d5fdbcfd4e1b2f",
+        "https://held-bangle-320.notion.site/Python-29bdb0c3a76f8333ad1001cc68a45d16?source=copy_link",
         use_container_width=True
     )
 
