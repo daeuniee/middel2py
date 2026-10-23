@@ -10,32 +10,34 @@ st.set_page_config(
 
 st.title("🐍 중2 파이썬 코딩 놀이터")
 
-st.caption(
-    "학습자료를 확인하고 직접 코드를 입력해 실행해 보세요."
-)
+st.caption("학습자료를 확인하고 직접 코드를 입력해 실행해 보세요.")
 
 st.info(
     "학습 범위: 출력(print), 입력(input), 변수, "
     "선택구조(if~else), 반복(for)"
 )
 
-# 전체 학습자료 링크
-st.link_button(
-    "📖 학습자료 전체 보기 (노션)",
-    "https://held-bangle-320.notion.site/2-4-402db0c3a76f81dfb4d5fdbcfd4e1b2f",
-    use_container_width=True,
-)
+# 가로 2단 배치
+left, right = st.columns(2, gap="medium")
 
-# Streamlit 공식 Playground
-st.link_button(
-    "🧪 Streamlit Playground 열기",
-    "https://streamlit.io/playground?example=blank",
-    use_container_width=True,
-)
+with left:
+    st.subheader("📚 학습자료")
+    st.link_button(
+        "노션 학습자료 열기",
+        "https://held-bangle-320.notion.site/2-4-402db0c3a76f81dfb4d5fdbcfd4e1b2f",
+        use_container_width=True
+    )
+
+with right:
+    st.subheader("💻 Streamlit 열기")
+    st.link_button(
+        "Streamlit Playground 열기",
+        "https://streamlit.io/playground?example=blank",
+        use_container_width=True
+    )
 
 st.divider()
 
-# 파이썬 코딩 실습
 st.subheader("💻 파이썬 코딩 실습")
 
 st.iframe(
