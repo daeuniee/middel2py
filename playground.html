@@ -1,0 +1,116 @@
+<!doctype html><html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+*{box-sizing:border-box}body{margin:0;padding:14px;font-family:system-ui,'Apple SD Gothic Neo',sans-serif;background:#f7f9fc;color:#172b4d}.grid{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(280px,.85fr);gap:16px}.pane{background:white;border:1px solid #dbe2ee;border-radius:18px;padding:16px;min-width:0}.title{font-weight:800;margin-bottom:12px}.control{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}button,select{border:1px solid #cbd5e1;border-radius:9px;padding:9px 12px;background:white;font:inherit;cursor:pointer}button.primary{background:#2563eb;border-color:#2563eb;color:white;font-weight:bold}button:disabled{opacity:.5;cursor:not-allowed}textarea{width:100%;resize:vertical;border:1px solid #cbd5e1;border-radius:9px;padding:12px;font:15px/1.5 ui-monospace,Consolas,monospace}#code{min-height:340px}#inputs{min-height:65px}pre{white-space:pre-wrap;overflow-wrap:anywhere;font:14px/1.6 ui-monospace,Consolas,monospace;margin:0}.output{background:#101c30;color:#e8f1ff;border-radius:12px;padding:16px;min-height:200px}.phone{width:min(100%,280px);margin:auto;border:9px solid #162238;border-radius:37px;padding:16px 12px 24px;background:linear-gradient(145deg,#e0f2fe,#fff);min-height:420px;box-shadow:0 7px 24px #14213d22}.notch{width:65px;height:8px;background:#162238;border-radius:20px;margin:0 auto 24px}.screen{background:white;border:1px solid #e2e8f0;border-radius:16px;min-height:245px;padding:18px 14px}.screen pre{color:#172b4d}small{color:#64748b}.status{min-height:28px;font-size:14px;color:#334155}.tab{margin:10px 0}.hide{display:none}@media(max-width:700px){.grid{grid-template-columns:1fr}.pane{padding:12px}#code{min-height:250px}}
+ .modal{position:fixed;inset:0;background:#0f172a99;display:flex;align-items:center;justify-content:center;z-index:999;padding:20px}.modal.hide{display:none}.modal-card{width:min(100%,410px);background:white;border-radius:18px;padding:24px;box-shadow:0 16px 50px #0004}.modal-card input{width:100%;padding:12px;border:1px solid #94a3b8;border-radius:9px;font:inherit}.modal-card p{white-space:pre-wrap;overflow-wrap:anywhere} </style></head><body>
+<div class="grid">
+<section class="pane"><div class="title">📝 내 파이썬 코드</div>
+<div class="control"><select id="example" aria-label="예제 선택"><option value="0">1. 인사하기</option><option value="1">2. 입력받기</option><option value="2">3. 환경 실천 판정</option><option value="3">4. 반복으로 응원하기</option><option value="4">5. 점수 계산하기</option></select><button id="load">예제 불러오기</button></div>
+<textarea id="code" spellcheck="false" aria-label="파이썬 코드 입력"></textarea>
+<p><small>💬 코드에 input()이 있으면 실행 중 입력 팝업이 나타납니다.</small></p>
+<div class="control" style="margin-top:12px"><button class="primary" id="run">▶ 실행하기</button><button id="stop">■ 중지</button><button id="reset">↺ 초기화</button></div>
+<div class="status" id="status" role="status">실행 준비 완료</div></section>
+<section class="pane"><div class="title">🖥 실행 결과 / 📱 스마트폰 앱</div><div class="control tab"><button id="normal">일반 출력</button><button id="mobile">스마트폰 화면</button></div>
+<div id="console" class="output"><pre id="output">실행 버튼을 눌러보세요.</pre></div>
+<div id="phone" class="phone hide"><div class="notch"></div><div class="screen"><pre id="phoneoutput">실행 버튼을 눌러보세요.</pre></div><div style="text-align:center;margin-top:24px;font-size:12px;color:#64748b">Python Mini App</div></div>
+<p><small>스마트폰 화면은 파이썬의 출력 내용을 휴대폰 형태로 보여주는 미리보기입니다. 실제 앱 설치 파일이 만들어지는 것은 아닙니다.</small></p></section></div>
+<div id="inputModal" class="modal hide" role="dialog" aria-modal="true" aria-labelledby="inputQuestion"><div class="modal-card"><div class="title">⌨️ 프로그램 입력</div><p id="inputQuestion">값을 입력하세요.</p><input id="inputAnswer" type="text" autocomplete="off" aria-label="프로그램 입력값" placeholder="여기에 답을 입력하세요"><div class="control" style="margin-top:16px"><button id="inputCancel">취소</button><button class="primary" id="inputOk">확인 ↵</button></div><small>Enter 키로 입력할 수 있습니다. 입력값은 저장되지 않습니다.</small></div></div>
+<script>
+(()=>{
+const $=x=>document.getElementById(x);
+const samples=[
+'print("안녕하세요!")\nprint("파이썬 코딩 시작!")',
+'name = input("이름: ")\nprint(name, "반가워요!")',
+'answer = input("텀블러를 사용했나요? (네/아니오): ")\nif answer == "네":\n    print("🌍 환경 지킴이 성공!")\nelse:\n    print("내일 다시 도전해요!")',
+'for i in range(1, 6):\n    print("지구를 지켜요!", i)',
+'score = int(input("환경 실천 횟수: "))\nif score >= 3:\n    print("지구 지킴이 달성! 🎉")\nelse:\n    print("조금 더 도전해요!")'];
+$('code').value=samples[0];let worker=null,timer=null,mode='normal',lastText='실행 버튼을 눌러보세요.',answers=[],startedAt=0,waiting=false;
+const setText=s=>{lastText=s;$('output').textContent=s;$('phoneoutput').textContent=s};
+const status=s=>$('status').textContent=s;
+const show=m=>{mode=m;$('console').classList.toggle('hide',m!=='normal');$('phone').classList.toggle('hide',m!=='mobile')};
+$('normal').onclick=()=>show('normal');$('mobile').onclick=()=>show('mobile');
+$('load').onclick=()=>{$('code').value=samples[Number($('example').value)];status('예제를 불러왔습니다.')};
+function stop(msg){if(timer){clearTimeout(timer);timer=null}if(worker){worker.terminate();worker=null}$('inputModal').classList.add('hide');waiting=false;if(msg)status(msg);$('run').disabled=false}
+$('stop').onclick=()=>stop('실행을 중지했습니다.');
+$('reset').onclick=()=>{stop();$('code').value=samples[0];answers=[];setText('실행 버튼을 눌러보세요.');status('초기화되었습니다.');show('normal')};
+// The worker contains the Python runtime, so loops cannot freeze the editor UI.
+const workerCode=`
+import {loadPyodide} from 'https://cdn.jsdelivr.net/pyodide/v0.27.7/full/pyodide.mjs';
+self.onmessage=async event=>{
+ try{
+  const py=await loadPyodide({indexURL:'https://cdn.jsdelivr.net/pyodide/v0.27.7/full/'});
+  py.globals.set('student_code',event.data.code);
+  py.globals.set('student_lines',event.data.lines);
+  const result=await py.runPythonAsync(String.raw\`
+import ast, io, contextlib, json
+code = student_code
+answers = list(student_lines)
+node = ast.parse(code, mode='exec')
+blocked = (ast.Import, ast.ImportFrom, ast.Attribute, ast.FunctionDef, ast.AsyncFunctionDef,
+           ast.ClassDef, ast.Lambda, ast.With, ast.AsyncWith, ast.Try, ast.Raise,
+           ast.Global, ast.Nonlocal, ast.Delete, ast.Await, ast.Yield, ast.YieldFrom,
+           ast.NamedExpr, ast.Match)
+allowed_calls = {'print','input','range','int','str','float','len','abs','sum','min','max'}
+for item in ast.walk(node):
+    if isinstance(item, blocked):
+        raise ValueError('이 수업에서는 해당 고급 문법을 사용할 수 없습니다.')
+    if isinstance(item, ast.Name) and item.id.startswith('_'):
+        raise ValueError('특수 내부 이름은 사용할 수 없습니다.')
+    if isinstance(item, ast.Call) and (not isinstance(item.func, ast.Name) or item.func.id not in allowed_calls):
+        raise ValueError('수업에서 허용된 함수만 사용할 수 있습니다.')
+class AskStudent(Exception):
+    def __init__(self, prompt): self.prompt = str(prompt)
+position = 0
+def lesson_input(prompt=''):
+    global position
+    if position >= len(answers): raise AskStudent(prompt)
+    value = str(answers[position]); position += 1
+    return value
+safe = {'print': print, 'input': lesson_input, 'range': range, 'int': int,
+        'str': str, 'float': float, 'len': len, 'abs': abs, 'sum': sum,
+        'min': min, 'max': max, 'True': True, 'False': False}
+buf=io.StringIO()
+try:
+    with contextlib.redirect_stdout(buf):
+        exec(compile(node,'<student>','exec'), {'__builtins__': safe, '__name__':'student'})
+    payload = {'kind':'done','text':buf.getvalue() or '(출력 내용이 없습니다.)'}
+except AskStudent as ask:
+    payload = {'kind':'input','prompt':ask.prompt or '값을 입력하세요.'}
+json.dumps(payload)
+\`);
+  self.postMessage(JSON.parse(result));
+ }catch(e){self.postMessage({kind:'error',text:String(e.message||e)});}
+};`;
+function ask(prompt){
+ waiting=true;$('inputQuestion').textContent=prompt;
+ $('inputAnswer').value='';$('inputModal').classList.remove('hide');
+ $('inputAnswer').focus();status('입력값을 기다리고 있습니다.');
+}
+$('inputOk').onclick=()=>{
+ if(!waiting)return;
+ if(answers.length>=30){stop('입력은 최대 30회까지 가능합니다.');return;}
+ answers.push($('inputAnswer').value);
+ $('inputModal').classList.add('hide');waiting=false;executeRound();
+};
+$('inputCancel').onclick=()=>{stop('입력이 취소되었습니다.');setText('학생이 입력을 취소했습니다.')};
+$('inputAnswer').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();$('inputOk').click()}});
+function executeRound(){
+ if(worker){worker.terminate();worker=null}
+ if(timer){clearTimeout(timer);timer=null}
+ if(Date.now()-startedAt>90000){setText('총 실행 허용 시간을 초과했습니다.');stop('시간 초과');return}
+ status('코드를 실행하고 있습니다.');
+ try{
+ const url=URL.createObjectURL(new Blob([workerCode],{type:'text/javascript'}));
+ worker=new Worker(url,{type:'module'});URL.revokeObjectURL(url);
+ worker.onmessage=e=>{
+  const result=e.data;
+  if(result.kind==='input'){if(worker){worker.terminate();worker=null}if(timer){clearTimeout(timer);timer=null}ask(result.prompt);return}
+  setText(result.text);stop(result.kind==='done'?'✅ 실행 완료':'⚠️ 코드 오류를 확인해 보세요.');
+ };
+ worker.onerror=()=>{setText('실행 환경을 불러올 수 없습니다. 인터넷 연결 또는 보안 설정을 확인하세요.');stop('실행 환경 오류')};
+ worker.postMessage({code:$('code').value,lines:answers});
+ timer=setTimeout(()=>{setText('실행 제한 시간(30초)을 넘었습니다. 반복문이나 인터넷 연결을 확인하세요.');stop('⏱ 실행 시간 초과')},30000);
+ }catch(e){setText(String(e));stop('실행 환경 오류')}
+}
+$('run').onclick=()=>{stop();answers=[];startedAt=Date.now();setText('실행 중입니다...');$('run').disabled=true;executeRound()};
+})();
+</script></body></html>
