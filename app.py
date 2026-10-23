@@ -23,7 +23,7 @@ left, right = st.columns(2, gap="medium")
 with left:
     st.subheader("📚 학습자료")
     st.link_button(
-        "노션 학습자료 열기",
+        "학습자료 열기",
         "https://held-bangle-320.notion.site/2-4-402db0c3a76f81dfb4d5fdbcfd4e1b2f",
         use_container_width=True
     )
