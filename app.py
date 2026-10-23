@@ -14,7 +14,7 @@ st.markdown(
     <div style="text-align: right;
                 color: gray;
                 font-size: 13px;">
-        제작: T정보교사
+        제작: 최다은T
     </div>
     """,
     unsafe_allow_html=True
@@ -37,7 +37,7 @@ left, right = st.columns(2, gap="medium")
 with left:
     st.subheader("📚 학습자료")
     st.link_button(
-        "노션 학습자료 열기",
+        "학습자료 열기",
         "https://held-bangle-320.notion.site/2-4-402db0c3a76f81dfb4d5fdbcfd4e1b2f",
         use_container_width=True
     )
@@ -74,7 +74,7 @@ st.markdown(
                 color: gray;
                 font-size: 12px;
                 padding: 8px 0 18px;">
-        © 2026 Python Coding Playground · Made by ○○
+        © 2026 Python Coding Playground · Made by 최다은T
     </div>
     """,
     unsafe_allow_html=True
